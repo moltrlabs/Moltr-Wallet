@@ -1,0 +1,5 @@
+{
+  "name": "moltr-api",
+  "type": "module",
+  "main": "dist/server.js"
+}

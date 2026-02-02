@@ -1,0 +1,38 @@
+// Moltr — Tags (username -> wallet) and Receipts (private proof records)
+// SQLite for local dev; Postgres for production (set DATABASE_URL accordingly)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Tag {
+  id           String   @id @default(cuid())
+  username     String   @unique // lowercase, 3-20 chars, [a-z0-9_]
+  walletAddress String
+  apiKeyHash   String   // argon2 hash; never store plain API key
+  createdAt    DateTime @default(now())
+
+  receiptsAsFrom Receipt[] @relation("FromTag")
+  receiptsAsTo   Receipt[] @relation("ToTag")
+}
+
+model Receipt {
+  id             String   @id @default(cuid())
+  signature      String   // proof signature
+  memo           String
+  fromTagId      String
+  toTagId        String
+  amountLamports BigInt
+  createdAt      DateTime @default(now())
+
+  fromTag Tag @relation("FromTag", fields: [fromTagId], references: [id])
+  toTag   Tag @relation("ToTag", fields: [toTagId], references: [id])
+
+  @@index([fromTagId])
+  @@index([toTagId])
+}
