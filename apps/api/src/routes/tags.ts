@@ -6,7 +6,9 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
-import { hashApiKey, generateApiKey } from "../lib/auth.js";
+import { hashApiKey, generateApiKey, requireApiKey } from "../lib/auth.js";
+
+type RequestWithTag = FastifyRequest & { tag: { id: string; username: string } };
 
 const registerBody = z.object({
   username: z
@@ -76,6 +78,51 @@ export async function tagsRoutes(app: FastifyInstance): Promise<void> {
       apiKey, // one-time: only shown here
     });
   });
+
+  // PATCH /api/v1/tags/me — update wallet address for the tag identified by x-api-key
+  const updateWalletBody = z.object({
+    walletAddress: z.string().min(1, "walletAddress is required"),
+  });
+  app.patch<{ Body: z.infer<typeof updateWalletBody> }>(
+    "/me",
+    {
+      preHandler: [requireApiKey as (req: FastifyRequest, reply: FastifyReply) => Promise<void>],
+      schema: {
+        tags: ["Tags"],
+        summary: "Update my wallet address",
+        description: "Update the wallet address for the tag identified by the API key. Requires x-api-key.",
+        security: [{ apiKey: [] }],
+        body: {
+          type: "object",
+          required: ["walletAddress"],
+          properties: { walletAddress: { type: "string" } },
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: { username: { type: "string" }, walletAddress: { type: "string" } },
+          },
+          400: { type: "object", properties: { message: { type: "string" } } },
+          401: { type: "object", properties: { message: { type: "string" } } },
+        },
+      },
+    },
+    async (request: FastifyRequest<{ Body: z.infer<typeof updateWalletBody> }>, reply: FastifyReply) => {
+      const parsed = updateWalletBody.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({ message: "Validation failed", errors: parsed.error.flatten() });
+      }
+      const { walletAddress } = parsed.data;
+      const tag = (request as RequestWithTag).tag;
+
+      const updated = await prisma.tag.update({
+        where: { id: tag.id },
+        data: { walletAddress },
+        select: { username: true, walletAddress: true },
+      });
+      return reply.send({ username: updated.username, walletAddress: updated.walletAddress });
+    }
+  );
 
   // GET /api/v1/tags/:username — lookup by username (no enumeration)
   app.get<{
