@@ -41,9 +41,10 @@ npm run dev
 ```
 
 - **API base:** `http://localhost:3000`  
-- **Health:** `GET /health`  
+- **Docs (Swagger UI):** `GET /docs`  
+- **Health:** `GET /health` (returns `{ ok, db, s3 }`; 503 if DB or S3 down when configured)  
 - **Tags:** `POST /api/v1/tags/register`, `GET /api/v1/tags/:username`  
-- **Receipts:** `POST /api/v1/receipts/create`, `GET /api/v1/receipts/` (header: `x-api-key`)  
+- **Receipts:** `POST /api/v1/receipts/create`, `GET /api/v1/receipts/` (paginated: `?limit=&cursor=`), `GET /api/v1/receipts/:id` (header: `x-api-key`)  
 - **Objects:** `PUT /objects/tokens/<mint>/logo.png` or `.../metadata.json` (binary body, max 2MB)  
 
 ---
@@ -55,8 +56,10 @@ npm run dev
 | POST | `/api/v1/tags/register` | — | Register username → wallet; returns **one-time** `apiKey`. |
 | GET | `/api/v1/tags/:username` | — | Lookup wallet by username. No list/search (anti-enumeration). |
 | POST | `/api/v1/receipts/create` | `x-api-key` (fromTag or toTag) | Create receipt; only sender or receiver key allowed. |
-| GET | `/api/v1/receipts/` | `x-api-key` | List receipts where the key’s tag is fromTag or toTag. |
+| GET | `/api/v1/receipts/` | `x-api-key` | List receipts (cursor pagination: `?limit=20&cursor=<id>`). |
+| GET | `/api/v1/receipts/:id` | `x-api-key` | Get single receipt (only if key is fromTag or toTag). |
 | PUT | `/objects/tokens/<mint>/logo.png` or `.../metadata.json` | — | Upload to object storage; max 2MB. |
+| GET | `/health` | — | Health check (DB + optional S3); 503 if unhealthy. |
 
 ---
 

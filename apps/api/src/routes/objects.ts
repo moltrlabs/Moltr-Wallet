@@ -18,6 +18,21 @@ export async function objectsRoutes(app: FastifyInstance): Promise<void> {
     "/*",
     {
       bodyLimit: MAX_BODY_SIZE,
+      schema: {
+        tags: ["Objects"],
+        summary: "Upload object",
+        description: "Upload token logo or metadata. Key must be tokens/<mint>/logo.png or tokens/<mint>/metadata.json. Max 2MB.",
+        params: { type: "object", properties: { "*": { type: "string", description: "Path: tokens/<mint>/logo.png or metadata.json" } } },
+        response: {
+          200: {
+            type: "object",
+            properties: { ok: { type: "boolean" }, publicUrl: { type: "string", format: "uri" } },
+          },
+          400: { type: "object", properties: { message: { type: "string" } } },
+          413: { type: "object", properties: { message: { type: "string" } } },
+          502: { type: "object", properties: { message: { type: "string" } } },
+        },
+      },
     },
     async (request: FastifyRequest<{ Params: { "*"?: string } }>, reply: FastifyReply) => {
       const rawKey = request.params["*"] ?? "";
