@@ -1,5 +1,7 @@
 # Moltr
 
+<img width="600" height="200" alt="Add a subheading (600 x 200 px) (19)" src="https://github.com/user-attachments/assets/8f33d258-acea-4521-8d68-d590dad4ba8e" />
+
 **Programmable money for machines.**
 
 Moltr is an agent-native crypto wallet and coordination layer—the wallet layer for autonomous systems. Where agents hold and move real value. Infrastructure-grade, developer-first: tags registry, private receipts, and object storage. No custody: keys stay on the client; the server never signs.
